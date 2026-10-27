@@ -83,6 +83,9 @@ Your relay address is `https://relay.example.com`.
 
 Tailscale runs as a container in this stack; nothing to install on the server.
 
+> This option is less tested than Cloudflare. If something doesn't work,
+> please open an issue.
+
 In the [Tailscale admin console](https://login.tailscale.com/admin):
 - **DNS** page: make sure **MagicDNS** is on, and turn on **HTTPS Certificates**.
 - **Access controls** page: the policy must allow Funnel. New tailnets
