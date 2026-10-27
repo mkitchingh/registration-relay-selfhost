@@ -1,7 +1,7 @@
 name: Publish image
 
-# Builds Beeper's unmodified relay from this repo (deploy/Dockerfile) for Intel
-# and ARM and publishes it to GitHub Container Registry.
+# Builds the relay from this repo (deploy/Dockerfile) for Intel and ARM and
+# publishes it to GitHub Container Registry.
 on:
   push:
     branches: [main]
