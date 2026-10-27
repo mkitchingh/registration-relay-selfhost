@@ -111,7 +111,8 @@ it on the **Machines** page of the admin console.
 after about six months and your relay address stops working.
 
 Already run Tailscale directly on the server? Set `COMPOSE_PROFILES=` (empty)
-instead, start the stack, and publish it with
+instead, open a local port (see [Using your own reverse proxy](#using-your-own-reverse-proxy-instead)),
+start the stack, and publish it with
 `sudo tailscale funnel --bg http://127.0.0.1:8080`.
 
 **4. Check it** (replace with your address):
@@ -139,8 +140,16 @@ cd deploy && docker compose pull && docker compose up -d
 
 ## Using your own reverse proxy instead
 
-Set `COMPOSE_PROFILES=` (empty) in `.env` and point your HTTPS reverse proxy,
-with websocket support, at `127.0.0.1:8080` on the server.
+By default the stack opens no ports on the server. To reach it from a reverse
+proxy on the same machine:
+
+```bash
+cp compose.override.example.yml compose.override.yml
+```
+
+Set `COMPOSE_PROFILES=` (empty) in `.env`, run `docker compose up -d`, and
+point your HTTPS reverse proxy, with websocket support, at `127.0.0.1:8080`.
+If 8080 is already in use, change the first `8080` in `compose.override.yml`.
 
 ## Troubleshooting
 
