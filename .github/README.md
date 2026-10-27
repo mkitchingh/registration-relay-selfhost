@@ -81,29 +81,38 @@ Your relay address is `https://relay.example.com`.
 
 **B. Tailscale Funnel**
 
-- In `.env`, change the line to `COMPOSE_PROFILES=` (empty) and leave
-  `TUNNEL_TOKEN` blank.
-- Start the relay:
-  ```bash
-  docker compose up -d
+Tailscale runs as a container in this stack; nothing to install on the server.
+
+In the [Tailscale admin console](https://login.tailscale.com/admin):
+- **DNS** page: make sure **MagicDNS** is on, and turn on **HTTPS Certificates**.
+- **Access controls** page: the policy must allow Funnel. New tailnets
+  include this by default; if yours doesn't, add:
+  ```json
+  "nodeAttrs": [{ "target": ["autogroup:member"], "attr": ["funnel"] }]
   ```
-- Install Tailscale on the server and sign in:
-  ```bash
-  curl -fsSL https://tailscale.com/install.sh | sh
-  sudo tailscale up
-  ```
-- Publish the relay. `--bg` keeps it running across reboots:
-  ```bash
-  sudo tailscale funnel --bg http://127.0.0.1:8080
-  ```
-  The first time, this prints a link to enable HTTPS and Funnel for your
-  tailnet. Open it, approve, then run the command again.
-- Get your address:
-  ```bash
-  tailscale funnel status
-  ```
-  It's `https://<machine-name>.<your-tailnet>.ts.net`. It's based on the
-  machine's name in Tailscale, so don't rename the machine afterward.
+- **Settings → Keys → Generate auth key.** Leave Reusable and Ephemeral off.
+  Copy the key (`tskey-auth-...`).
+
+In `.env`:
+- `COMPOSE_PROFILES=tailscale`
+- `TS_AUTHKEY=` the key you copied
+- `TS_HOSTNAME=relay` (or another name; it becomes part of your address)
+
+Then start it:
+```bash
+docker compose up -d
+docker compose logs tailscale | grep -i -E "funnel|https://"
+```
+Your relay address is `https://relay.<your-tailnet>.ts.net`. You can also find
+it on the **Machines** page of the admin console.
+
+**Important:** on the **Machines** page, open the new `relay` machine's menu
+(**…**) and choose **Disable key expiry**. Otherwise Tailscale signs it out
+after about six months and your relay address stops working.
+
+Already run Tailscale directly on the server? Set `COMPOSE_PROFILES=` (empty)
+instead, start the stack, and publish it with
+`sudo tailscale funnel --bg http://127.0.0.1:8080`.
 
 **4. Check it** (replace with your address):
 ```bash
@@ -136,13 +145,17 @@ with websocket support, at `127.0.0.1:8080` on the server.
 ## Troubleshooting
 
 ```bash
-docker compose ps                 # relay (healthy), filter, and cloudflared if using Cloudflare: all Up
+docker compose ps                 # relay (healthy), filter, and cloudflared or tailscale: all Up
 docker compose logs -f relay      # device connects, commands, errors
 docker compose logs -f filter     # every request and its status code
 ```
 - `404` on a command: no device is connected with that code. Check the
   provider shows connected, and that it's pointed at your relay, not Beeper's.
 - Device keeps getting new codes: the secret changed. Restore it from your backup.
+- Tailscale address not answering: check `docker compose logs tailscale`.
+  "invalid key" means the auth key expired before first use; generate a new
+  one. If it stopped after an update, run `docker compose up -d` again (the
+  Tailscale container shares the filter's network and restarts with it).
 
 ## License
 
