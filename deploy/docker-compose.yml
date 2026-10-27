@@ -21,12 +21,11 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - relay
-    # Reachable only from this machine. Used by Tailscale Funnel or your own
-    # reverse proxy; Cloudflare Tunnel reaches it over the Docker network.
+    # Reachable only from this machine, for your own reverse proxy if you use one.
     ports:
       - "127.0.0.1:${RELAY_LOCAL_PORT:-8080}:8080"
 
-  # Started only when COMPOSE_PROFILES includes "cloudflare" (see .env).
+  # Public address, option A. Runs when COMPOSE_PROFILES=cloudflare (see .env).
   cloudflared:
     image: cloudflare/cloudflared:latest
     container_name: rr-cloudflared
@@ -35,3 +34,26 @@ services:
     command: tunnel --no-autoupdate run --token ${TUNNEL_TOKEN:-}
     depends_on:
       - filter
+
+  # Public address, option B. Runs when COMPOSE_PROFILES=tailscale (see .env).
+  # Shares the filter's network, so Funnel forwards to it at 127.0.0.1:8080.
+  tailscale:
+    image: tailscale/tailscale:latest
+    container_name: rr-tailscale
+    restart: unless-stopped
+    profiles: ["tailscale"]
+    network_mode: service:filter
+    environment:
+      - TS_AUTHKEY=${TS_AUTHKEY:-}
+      - TS_HOSTNAME=${TS_HOSTNAME:-relay}
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_SERVE_CONFIG=/config/serve.json
+      - TS_USERSPACE=true
+    volumes:
+      - tailscale-state:/var/lib/tailscale
+      - ./tailscale:/config:ro
+    depends_on:
+      - filter
+
+volumes:
+  tailscale-state:
