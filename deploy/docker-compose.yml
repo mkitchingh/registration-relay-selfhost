@@ -2,8 +2,8 @@ name: registration-relay
 
 services:
   relay:
-    # Prebuilt multi-arch image of Beeper's unmodified relay. If it can't be
-    # pulled, Compose builds it from this repo instead (deploy/Dockerfile).
+    # Prebuilt multi-arch image of the relay. If it can't be pulled,
+    # Compose builds it from this repo instead (deploy/Dockerfile).
     image: ghcr.io/mkitchingh/registration-relay-selfhost:latest
     build:
       context: ..

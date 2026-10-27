@@ -1,9 +1,9 @@
-# Builds Beeper's registration-relay exactly as published, from this repo's
-# source and vendored dependencies. No network access is needed for the Go build.
+# Builds the relay from this repo's source and vendored dependencies.
+# No network access is needed for the Go build.
 #
-# Beeper's own Dockerfile (at the repo root, left unchanged) also installs a
+# The Dockerfile at the repo root (from the original project) also installs a
 # live-reload dev tool at its latest version, which no longer builds on the
-# Go 1.21 image it uses. This file builds the same relay without that step.
+# Go 1.21 image it uses. This file builds the relay without that step.
 FROM golang:1.24-alpine AS build
 WORKDIR /src
 COPY . .
