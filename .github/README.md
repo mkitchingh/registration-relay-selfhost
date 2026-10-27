@@ -31,8 +31,18 @@ instant empty `401`. Everything else goes to the relay as-is.
 ## Requirements
 
 - A Linux machine or VM that stays on, with Docker and Docker Compose (Intel or ARM)
-- A domain on Cloudflare (for the free Cloudflare Tunnel; no ports to open)
+- A permanent public HTTPS address. Either works, and neither needs open ports:
+  - **Cloudflare Tunnel (recommended).** Free, but requires a domain you own,
+    added to Cloudflare. If you don't have one, Cloudflare sells domains at
+    cost, about $10/year for a `.com`.
+  - **Tailscale Funnel.** Free, no domain needed. You get an address like
+    `https://myserver.tail1234.ts.net`. Only the server runs Tailscale; phones
+    and apps connect to it like any other website.
 - A registration provider that lets you set a custom relay URL
+
+The address must never change: devices and clients store it, and if it
+changes, registration renewals fail. That's why temporary addresses such as
+Cloudflare's `trycloudflare.com` quick tunnels won't work.
 
 ## Install
 
@@ -51,19 +61,51 @@ Back it up somewhere safe. It lets your device keep its relay code across
 restarts; if it's lost or changed, every device gets a new code and must
 register again.
 
-**3. Create a Cloudflare Tunnel.** Cloudflare dashboard → Zero Trust →
-Networks → Tunnels → Create a tunnel → Cloudflared.
+**3. Set up the public address**, either A or B.
+
+**A. Cloudflare Tunnel (recommended)**
+
+Cloudflare dashboard → Zero Trust → Networks → Tunnels → Create a tunnel →
+Cloudflared.
 - Copy only the token (the long `eyJ...` string) into `.env` as `TUNNEL_TOKEN=`.
   Don't run the install commands Cloudflare shows.
 - Add a route: **Published application**, a subdomain of your choice
   (e.g. `relay.example.com`), service type **HTTP**, URL **`rr-filter:8080`**.
+- Leave `COMPOSE_PROFILES=cloudflare` in `.env`.
 
-**4. Start it**
+Then start it:
 ```bash
 docker compose up -d
 ```
+Your relay address is `https://relay.example.com`.
 
-**5. Check it** (replace with your hostname):
+**B. Tailscale Funnel**
+
+- In `.env`, change the line to `COMPOSE_PROFILES=` (empty) and leave
+  `TUNNEL_TOKEN` blank.
+- Start the relay:
+  ```bash
+  docker compose up -d
+  ```
+- Install Tailscale on the server and sign in:
+  ```bash
+  curl -fsSL https://tailscale.com/install.sh | sh
+  sudo tailscale up
+  ```
+- Publish the relay. `--bg` keeps it running across reboots:
+  ```bash
+  sudo tailscale funnel --bg http://127.0.0.1:8080
+  ```
+  The first time, this prints a link to enable HTTPS and Funnel for your
+  tailnet. Open it, approve, then run the command again.
+- Get your address:
+  ```bash
+  tailscale funnel status
+  ```
+  It's `https://<machine-name>.<your-tailnet>.ts.net`. It's based on the
+  machine's name in Tailscale, so don't rename the machine afterward.
+
+**4. Check it** (replace with your address):
 ```bash
 curl -s -o /dev/null -w '%{http_code}\n' https://relay.example.com/health                         # 204
 curl -s -o /dev/null -w '%{http_code}\n' -X POST https://relay.example.com/api/v1/bridge/sign-data  # 401
@@ -86,16 +128,15 @@ cd registration-relay-selfhost && git pull
 cd deploy && docker compose pull && docker compose up -d
 ```
 
-## Not using Cloudflare?
+## Using your own reverse proxy instead
 
-Remove the `cloudflared` service from `deploy/docker-compose.yml`, uncomment
-the `ports` line on `filter`, and point your own HTTPS reverse proxy (with
-websocket support) at `127.0.0.1:8080`.
+Set `COMPOSE_PROFILES=` (empty) in `.env` and point your HTTPS reverse proxy,
+with websocket support, at `127.0.0.1:8080` on the server.
 
 ## Troubleshooting
 
 ```bash
-docker compose ps                 # all three should be Up (relay: healthy)
+docker compose ps                 # relay (healthy), filter, and cloudflared if using Cloudflare: all Up
 docker compose logs -f relay      # device connects, commands, errors
 docker compose logs -f filter     # every request and its status code
 ```
