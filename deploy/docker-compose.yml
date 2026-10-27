@@ -1,0 +1,35 @@
+name: registration-relay
+
+services:
+  relay:
+    # Prebuilt multi-arch image of Beeper's unmodified relay. If it can't be
+    # pulled, Compose builds it from this repo instead (deploy/Dockerfile).
+    image: ghcr.io/mkitchingh/registration-relay-selfhost:latest
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    container_name: rr-relay
+    restart: unless-stopped
+    environment:
+      - REGISTRATION_RELAY_SECRET=${REGISTRATION_RELAY_SECRET:?Set REGISTRATION_RELAY_SECRET in .env (openssl rand -base64 32)}
+
+  filter:
+    image: nginxinc/nginx-unprivileged:1.27-alpine
+    container_name: rr-filter
+    restart: unless-stopped
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - relay
+    # Not using Cloudflare Tunnel? Remove the cloudflared service, uncomment
+    # this, and point your own HTTPS reverse proxy (with websocket support) here.
+    # ports:
+    #   - "127.0.0.1:8080:8080"
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: rr-cloudflared
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token ${TUNNEL_TOKEN:?Set TUNNEL_TOKEN in .env}
+    depends_on:
+      - filter
