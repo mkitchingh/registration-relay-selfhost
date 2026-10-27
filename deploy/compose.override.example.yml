@@ -1,0 +1,13 @@
+# Only needed if you publish the relay with your own reverse proxy, or with
+# Tailscale installed directly on the server (not the tailscale container).
+#
+#   cp compose.override.example.yml compose.override.yml
+#   docker compose up -d
+#
+# Docker Compose loads compose.override.yml automatically. The relay is then
+# reachable at http://127.0.0.1:8080 on this machine only. If 8080 is taken,
+# change the first 8080 below (e.g. "127.0.0.1:18080:8080").
+services:
+  filter:
+    ports:
+      - "127.0.0.1:8080:8080"
