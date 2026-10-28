@@ -134,6 +134,16 @@ curl -s -o /dev/null -w '%{http_code}\n' -X POST https://relay.example.com/api/v
 Moving from Beeper's relay to yours gives your device a new code, so it means
 registering once more.
 
+## Access
+
+Like Beeper's relay, this relay is open: anyone who knows your address can
+connect a phone to it, and anyone who knows a device's code can request its
+validation data. Codes are random, so in practice someone would need both your
+address and your code.
+
+A planned improvement is an optional setting that accepts approved connections
+only.
+
 ## Updating
 
 ```bash
