@@ -213,6 +213,10 @@ docker compose logs -f filter     # every request and its status code
   one. If it stopped after an update, run `docker compose up -d` again (the
   Tailscale container shares the filter's network and restarts with it).
 
+## Related
+
+[ValidationRelay-plus](https://github.com/mkitchingh/ValidationRelay-plus) (Relay+) — an iPhone registration-provider app, a fork of JJTech's ValidationRelay with the Mac-identity swap built in, so a relay iPhone keeps registering after Apple's October 2026 change.
+
 ## License
 
 AGPL-3.0, the same as Beeper's registration-relay (see [`LICENSE`](../LICENSE)).
