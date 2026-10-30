@@ -128,6 +128,8 @@ curl -s -o /dev/null -w '%{http_code}\n' -X POST https://relay.example.com/api/v
 
 - **Registration provider**: set a custom relay URL of
   `wss://relay.example.com/api/v1/provider`. It will show a new code.
+  (If you set `PROVIDER_SECRET` — see [Access](#access) — use
+  `wss://relay.example.com/<secret>/api/v1/provider` instead.)
 - **Client**: wherever you'd enter Beeper's relay address, use
   `https://relay.example.com`, with the new code.
 
@@ -136,13 +138,42 @@ registering once more.
 
 ## Access
 
-Like Beeper's relay, this relay is open: anyone who knows your address can
-connect a phone to it, and anyone who knows a device's code can request its
-validation data. Codes are random, so in practice someone would need both your
-address and your code.
+By default, like Beeper's relay, this relay is open: anyone who knows your
+address can connect a provider to it, and anyone who knows a device's code can
+request its validation data. Codes are random, so in practice someone would
+need both your address and a code.
 
-A planned improvement is an optional setting that accepts approved connections
-only.
+### Approved providers only (optional)
+
+Set `PROVIDER_SECRET` in `.env` to lock it down. The provider endpoint then
+moves to `/<secret>/api/v1/provider`, and the bare `/api/v1/provider` returns
+`404`. Because a client can't get a code without a provider, gating the
+provider locks the whole relay — and **clients need no change**, only the
+provider URL.
+
+Pick a secret (letters, digits, `-`, `_`; ~12 characters is plenty, since the
+only attack is slow online guessing):
+
+```bash
+openssl rand -hex 6
+```
+
+Put it in `.env` as `PROVIDER_SECRET=`, then apply it:
+
+```bash
+cd deploy && docker compose up -d
+```
+
+Now point your provider at:
+
+```
+wss://relay.example.com/<secret>/api/v1/provider
+```
+
+The secret rides inside the HTTPS request, so the path is encrypted in transit.
+It's a shared secret in the URL, not per-user accounts — right-sized for a
+personal or small-group relay. To reopen the relay, blank `PROVIDER_SECRET`
+and run `docker compose up -d` again.
 
 ## Updating
 
