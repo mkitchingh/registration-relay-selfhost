@@ -1,0 +1,46 @@
+name: Visitor stats
+
+# Records weekly page-view traffic into stats/views.csv and redraws
+# stats/views.svg, so the history is kept past GitHub's 14-day window.
+# Views reflect real visitors (not git-cloning bots). Needs a token that can
+# read repo traffic (GITHUB_TOKEN can't): a fine-grained PAT for this repo with
+# "Administration: Read" stored as the secret TRAFFIC_TOKEN.
+on:
+  schedule:
+    - cron: "17 7 * * 1"   # Mondays 07:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  stats:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch view traffic
+        env:
+          GH_TOKEN: ${{ secrets.TRAFFIC_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::TRAFFIC_TOKEN secret is not set (needs a PAT with Administration: Read)."
+            exit 1
+          fi
+          gh api "repos/${{ github.repository }}/traffic/views" > views.json
+
+      - name: Update CSV and chart
+        run: python3 stats/update_visitor_stats.py views.json
+
+      - name: Commit if changed
+        run: |
+          rm -f views.json
+          if git diff --quiet -- stats/; then
+            echo "No change in visitor stats."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add stats/views.csv stats/views.svg
+          git commit -m "chore: update visitor stats"
+          git push
