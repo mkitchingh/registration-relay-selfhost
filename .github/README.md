@@ -126,15 +126,23 @@ curl -s -o /dev/null -w '%{http_code}\n' -X POST https://relay.example.com/api/v
 
 ## Point your devices and apps at it
 
-- **Registration provider**: set a custom relay URL of
-  `wss://relay.example.com/api/v1/provider`. It will show a new code.
-  (If you set `PROVIDER_SECRET` — see [Access](#access) — use
-  `wss://relay.example.com/<secret>/api/v1/provider` instead.)
-- **Client**: wherever you'd enter Beeper's relay address, use
-  `https://relay.example.com`, with the new code.
+Two different things connect to the relay, and they're set up differently:
 
-Moving from Beeper's relay to yours gives your device a new code, so it means
-registering once more.
+- **Registration provider** — the Mac/iOS app that holds the Apple identity.
+  Set its custom relay URL to `wss://relay.example.com/api/v1/provider`
+  (`wss://`, ends in `/api/v1/provider`). Once connected, it shows a
+  **registration code**.
+  If you set `PROVIDER_SECRET` (see [Access](#access)), the provider uses the
+  secret path instead: `wss://relay.example.com/<secret>/api/v1/provider`.
+- **Client** — the bridge (e.g. OpenBubbles). Wherever you'd enter Beeper's
+  relay address, use the **base address** `https://relay.example.com`
+  (`https://`, no path) together with the registration code from the provider.
+  The client **never uses `PROVIDER_SECRET`** — only the provider does.
+
+So the secret and the code are different things: the secret is the provider's
+key to register, and the code is what links a client to that provider. Moving
+from Beeper's relay to yours issues a new code, so each client registers once
+more.
 
 ## Access
 
@@ -145,26 +153,21 @@ need both your address and a code.
 
 ### Approved providers only (optional)
 
-Set `PROVIDER_SECRET` in `.env` to lock it down. The provider endpoint then
-moves to `/<secret>/api/v1/provider`, and the bare `/api/v1/provider` returns
-`404`. Because a client can't get a code without a provider, gating the
-provider locks the whole relay — and **clients need no change**, only the
-provider URL.
+Set `PROVIDER_SECRET` to lock it down. The provider endpoint then moves to
+`/<secret>/api/v1/provider`, and the bare `/api/v1/provider` returns `404`.
+Because a client can't get a code without a provider, gating the provider locks
+the whole relay — and **only the provider URL changes; clients are untouched.**
 
-Pick a secret (letters, digits, `-`, `_`; ~12 characters is plenty, since the
-only attack is slow online guessing):
-
-```bash
-openssl rand -hex 6
-```
-
-Put it in `.env` as `PROVIDER_SECRET=`, then apply it:
+From `deploy/`, this one command generates a secret (letters and digits, 12
+characters — plenty, since the only attack is slow online guessing), writes it
+to `.env`, prints it, applies it, and shows the result:
 
 ```bash
-cd deploy && docker compose up -d
+SECRET=$(openssl rand -hex 6) && sed -i '/^PROVIDER_SECRET=/d' .env && echo "PROVIDER_SECRET=$SECRET" >> .env && echo ">>> SAVE THIS SECRET: $SECRET" && docker compose up -d && sleep 2 && docker compose logs filter | grep provider-path
 ```
 
-Now point your provider at:
+**Save the printed secret** — you'll need it for the provider URL. The log line
+should read `provider-path: locked`. Then point your provider at:
 
 ```
 wss://relay.example.com/<secret>/api/v1/provider
@@ -172,8 +175,8 @@ wss://relay.example.com/<secret>/api/v1/provider
 
 The secret rides inside the HTTPS request, so the path is encrypted in transit.
 It's a shared secret in the URL, not per-user accounts — right-sized for a
-personal or small-group relay. To reopen the relay, blank `PROVIDER_SECRET`
-and run `docker compose up -d` again.
+personal or small-group relay. To reopen the relay, blank `PROVIDER_SECRET` in
+`.env` (or delete the line) and run `docker compose up -d` again.
 
 ## Updating
 
