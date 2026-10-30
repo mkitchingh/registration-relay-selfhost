@@ -213,6 +213,12 @@ docker compose logs -f filter     # every request and its status code
   one. If it stopped after an update, run `docker compose up -d` again (the
   Tailscale container shares the filter's network and restarts with it).
 
+## Clones
+
+Clone activity, recorded weekly so it's kept past GitHub's 14-day traffic window:
+
+![Repository clone history](../stats/clones.svg)
+
 ## License
 
 AGPL-3.0, the same as Beeper's registration-relay (see [`LICENSE`](../LICENSE)).
