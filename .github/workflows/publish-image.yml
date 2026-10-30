@@ -5,6 +5,16 @@ name: Publish image
 on:
   push:
     branches: [main]
+    # Only rebuild when something that goes into the image changes. Docs and
+    # runtime config (nginx.conf, compose, provider-path.sh, .env.example) are
+    # mounted at runtime, not baked in, so they don't trigger a rebuild.
+    paths:
+      - '**.go'
+      - 'go.mod'
+      - 'go.sum'
+      - 'vendor/**'
+      - 'deploy/Dockerfile'
+      - '.github/workflows/publish-image.yml'
   workflow_dispatch:
 
 permissions:
