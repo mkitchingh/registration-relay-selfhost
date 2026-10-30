@@ -17,8 +17,13 @@ services:
     image: nginxinc/nginx-unprivileged:1.27-alpine
     container_name: rr-filter
     restart: unless-stopped
+    environment:
+      # Optional. Empty = open relay. Set it (in .env) to lock provider
+      # registration behind a secret path. See .env.example and the README.
+      - PROVIDER_SECRET=${PROVIDER_SECRET:-}
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./provider-path.sh:/docker-entrypoint.d/25-provider-path.sh:ro
     depends_on:
       - relay
     # No port is opened on the host by default. Cloudflare and Tailscale reach
