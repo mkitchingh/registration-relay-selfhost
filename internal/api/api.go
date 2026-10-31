@@ -11,7 +11,6 @@ import (
 	"github.com/rs/zerolog/hlog"
 	"github.com/rs/zerolog/log"
 
-	"github.com/beeper/libserv/pkg/health"
 	"github.com/beeper/libserv/pkg/requestlog"
 
 	"github.com/beeper/registration-relay/internal/config"
@@ -40,7 +39,15 @@ func NewAPI(cfg config.Config) *api {
 	r.Use(requestlog.AccessLogger(false))
 	r.Use(metrics.TrackHTTPMetrics) // must be after requestlog.AccessLogger
 
-	r.Get("/health", health.Health)
+	// Liveness check: 200 with a small body, answering GET and HEAD, so uptime
+	// monitors work whether they read the response (keyword checks) or send HEAD.
+	healthHandler := func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("ok\n"))
+	}
+	r.Get("/health", healthHandler)
+	r.Head("/health", healthHandler)
 
 	r.Get("/api/v1/provider", api.providerWebsocket)
 
