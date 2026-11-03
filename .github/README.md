@@ -129,7 +129,7 @@ curl -s -o /dev/null -w '%{http_code}\n' -X POST https://relay.example.com/api/v
 
 Two different things connect to the relay, and they're set up differently:
 
-- **Registration provider** — the Mac/iOS app that holds the Apple identity.
+- **Registration provider** — the iPhone app (ValidationRelay) that holds the Apple identity.
   Set its custom relay URL to `wss://relay.example.com/api/v1/provider`
   (`wss://`, ends in `/api/v1/provider`). Once connected, it shows a
   **registration code**.
@@ -216,7 +216,7 @@ docker compose logs -f filter     # every request and its status code
 
 ## Related
 
-[ValidationRelay-plus](https://github.com/mkitchingh/ValidationRelay-plus) (Relay+) — an iPhone registration-provider app, a fork of JJTech's ValidationRelay with the Mac-identity swap built in, so a relay iPhone keeps registering after Apple's October 2026 change.
+[ValidationRelay-plus](https://github.com/mkitchingh/ValidationRelay-plus) (Relay+) — an iPhone registration-provider app, a fork of JJTech's ValidationRelay, kept compatible with the current OpenBubbles release so a relay iPhone keeps registering after Apple's October 2026 change.
 
 ## License
 
