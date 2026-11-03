@@ -13,9 +13,10 @@ dependencies vendored so builds don't depend on outside sources.
 ## Why there's a routing filter
 
 The relay forwards every `/api/v1/bridge/<command>` request to the connected
-device. Registration providers implement two commands: `get-version-info` and
-`get-validation-data`. If a client sends any other command, the device ignores
-it and the relay:
+device. Current registration providers implement `get-version-info`,
+`get-validation-data`, `activate` and `sign-data` (the 11/1 OpenBubbles release
+added the last two). If a client sends a command the device doesn't implement,
+the device ignores it and the relay:
 
 1. waits 60 seconds for an answer that never comes,
 2. holds up that device's other requests meanwhile, then
@@ -24,7 +25,7 @@ it and the relay:
 Some clients send other commands periodically. Beeper's hosted relay answers
 them with an instant, empty `401`, and those clients carry on.
 
-`deploy/nginx.conf` does the same: the two provider commands and the device
+`deploy/nginx.conf` does the same: the four provider commands and the device
 connection pass straight through, and any other bridge command gets an
 instant empty `401`. Everything else goes to the relay as-is.
 
@@ -121,7 +122,7 @@ start the stack, and publish it with
 **4. Check it** (replace with your address):
 ```bash
 curl -s -o /dev/null -w '%{http_code}\n' https://relay.example.com/health                         # 204
-curl -s -o /dev/null -w '%{http_code}\n' -X POST https://relay.example.com/api/v1/bridge/sign-data  # 401
+curl -s -o /dev/null -w '%{http_code}\n' -X POST https://relay.example.com/api/v1/bridge/unknown-command  # 401
 ```
 
 ## Point your devices and apps at it
