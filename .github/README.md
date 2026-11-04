@@ -22,12 +22,10 @@ the device ignores it and the relay:
 2. holds up that device's other requests meanwhile, then
 3. drops the device's connection to force a reconnect.
 
-Some clients send other commands periodically. Beeper's hosted relay answers
-them with an instant, empty `401`, and those clients carry on.
-
-`deploy/nginx.conf` does the same: the four provider commands and the device
-connection pass straight through, and any other bridge command gets an
-instant empty `401`. Everything else goes to the relay as-is.
+`deploy/nginx.conf` prevents that: it passes those four commands and the
+device's websocket straight through, and returns an instant, empty `401` for
+any other bridge command, so an unimplemented one can't stall the device.
+Everything else goes to the relay as-is.
 
 ## Requirements
 
