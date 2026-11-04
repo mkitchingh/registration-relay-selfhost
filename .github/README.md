@@ -186,6 +186,14 @@ cd registration-relay-selfhost && git pull
 cd deploy && docker compose pull && docker compose up -d
 ```
 
+If an update only changes `nginx.conf` (and not the relay image), `docker compose
+up -d` won't reload it, because the file is bind-mounted and nothing in the
+compose file changed. Restart the filter to pick it up:
+
+```bash
+docker compose restart filter
+```
+
 ## Using your own reverse proxy instead
 
 By default the stack opens no ports on the server. To reach it from a reverse
