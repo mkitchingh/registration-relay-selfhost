@@ -14,7 +14,7 @@ services:
       - REGISTRATION_RELAY_SECRET=${REGISTRATION_RELAY_SECRET:?Set REGISTRATION_RELAY_SECRET in .env (openssl rand -base64 32)}
 
   filter:
-    image: nginxinc/nginx-unprivileged:1.27-alpine
+    image: nginxinc/nginx-unprivileged:stable-alpine
     container_name: rr-filter
     restart: unless-stopped
     environment:
