@@ -4,14 +4,14 @@
 # The Dockerfile at the repo root (from the original project) also installs a
 # live-reload dev tool at its latest version, which no longer builds on the
 # Go 1.21 image it uses. This file builds the relay without that step.
-FROM golang:1.24-alpine AS build
+FROM golang:1.27-alpine3.24 AS build
 WORKDIR /src
 COPY . .
 RUN CGO_ENABLED=0 go build -mod=vendor -trimpath \
     -ldflags "-s -w -X main.Commit=c00b355110b2f8de9a8246feff8c7c3914ecd88c" \
     -o /registration_relay ./cmd/registration_relay
 
-FROM alpine:3.21
+FROM alpine:3.24
 RUN apk add --no-cache ca-certificates \
  && adduser -D -H -u 10001 relay
 COPY --from=build /registration_relay /usr/local/bin/registration_relay
