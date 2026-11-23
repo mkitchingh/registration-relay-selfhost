@@ -215,6 +215,11 @@ docker compose logs -f filter     # every request and its status code
 - `404` on a command: no device is connected with that code. Check the
   provider shows connected, and that it's pointed at your relay, not Beeper's.
 - Device keeps getting new codes: the secret changed. Restore it from your backup.
+- OpenBubbles shows `530` or `error code: 1033`: Cloudflare can't reach your
+  server through the tunnel. Run `docker compose ps` in `deploy/`, check that
+  `cloudflared` is up and connected (`docker compose logs --tail 30 cloudflared`),
+  then `docker compose up -d` to start anything that's stopped. If the
+  containers are all up, check that the server itself has internet access.
 - Tailscale address not answering: check `docker compose logs tailscale`.
   "invalid key" means the auth key expired before first use; generate a new
   one. If it stopped after an update, run `docker compose up -d` again (the
